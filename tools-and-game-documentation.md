@@ -42,15 +42,6 @@ https://github.com/plasticmacaroni/bg3-missables?tab=readme-ov-file
 
 
 
-### 3. Technical Integration Documentation
-
-#### 3.1 Overlay Technology
-
-| Documentation | Purpose | Resource |
-|---------------|---------|----------|
-| **Window Capture** | Methods for creating overlays on game windows | [Windows API Documentation](https://docs.microsoft.com/en-us/windows/win32/winmsg/window-features) |
-| **Input Handling** | Hotkey detection and processing | [JavaScript Keyboard Events](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent) |
-| **Transparency** | Implementation of semi-transparent UI | [CSS Opacity and Background Documentation](https://developer.mozilla.org/en-US/docs/Web/CSS/opacity) |
 
 #### 3.2 Data Management
 
