@@ -1,200 +1,190 @@
-# fridayAI
-FridayAI Technical Document
+# FridayAI Gaming Assistant - Product Requirements Document (PRD)
 
-Overview
+**Version:** 0.1 (MVP)  
+**Date:** April 3, 2025  
+**Owner:** Vedant Gosavi
 
-FridayAI is an interactive gaming assistant designed to elevate the gaming experience by delivering real-time information, quest tracking, and comprehensive game guides for popular titles. It aims to be a top-notch product for gamers, offering a seamless and feature-rich toolset to enhance gameplay across multiple platforms.
-Purpose
-This document outlines the technical architecture, components, and implementation details for FridayAI, ensuring a scalable, secure, and high-quality product tailored to the needs of gamers. It leverages a modern tech stack and best practices to achieve performance, usability, and extensibility.
-Features
-Real-time Overlay with Game Information: Displays live game data to assist players during gameplay.
+---
 
-Quest Tracking and Progress Monitoring: Tracks and updates quest progress for individual users.
+## 1. Product Overview
 
-Interactive Maps and Location Guides: Provides navigable maps with key locations and guides.
+FridayAI is a cross-platform gaming assistant designed to provide real-time game information, quest tracking, and immersive guides for popular titles such as Elden Ring and Baldur’s Gate 3. It features a lightweight Tauri-based desktop overlay (written in Rust & TypeScript) that interacts with a Next.js backend for user authentication, data storage, and content delivery.  
 
-Item Database with Search Functionality: A searchable repository of in-game items and their details.
+Key points:
+- Cross-platform desktop app using Tauri  
+- Transparent, always-on-top overlay for in-game assistance  
+- Next.js & React for the primary user interface and backend endpoints  
+- Authentication and user management via Clerk  
+- Payment processing and purchase flows via Stripe  
+- PostgreSQL for storing user progress, quest data, item databases, etc.  
 
-User Account and Subscription Management: Handles authentication, profiles, and tiered subscriptions.
+References:  
+- Technical overview:   
+- Monetization structure:   
+- Database schema and architecture:   
 
-Multi-platform Support: Compatible with Windows, macOS, and Linux.
+---
 
-Tech Stack
-Frontend: NextJS, React, Tailwind CSS, Shad Cn (UI components)
+## 2. Goals & Objectives
 
-Backend: NextJS App Router (API routes)
+1. **Enhance Gameplay Experience**  
+   Provide players with real-time guidance (quests, items, maps) within an unobtrusive overlay.  
 
-Database: PostgreSQL
+2. **Offer Comprehensive Game Data Packs**  
+   Each supported title comes with curated data: quest lines, items, NPCs, and location intel.  
 
-Language: TypeScript
+3. **Enable Seamless Purchasing & Upgrades**  
+   One-click purchases of premium data packs, themes, or other add-ons directly in the overlay.  
 
-Authentication: Clerk
+4. **Ensure Cross-Platform Compatibility**  
+   Deliver a lightweight, responsive overlay solution for Windows, macOS, and Linux, without high resource usage.  
 
-Payment Processing: Stripe
+5. **Scale for Additional Titles**  
+   Maintain a modular code structure that allows new game support by simply adding data schemas and front-end packages.  
 
-Hosting: Vercel
+---
 
-Architecture
-FridayAI employs a client-server architecture optimized for Vercel hosting:
-Client: A web-based frontend built with React and NextJS, utilizing the NextJS App Router for enhanced routing and performance.
+## 3. User Personas
 
-Server: NextJS App Router handles backend logic, data processing, and database interactions.
+1. **Casual Gamer**  
+   - Wants quick quest help or item locations but minimal screen clutter.  
+   - Likely to use the free or basic data packs.  
 
-Database: PostgreSQL stores persistent data such as user profiles, game information, and progress.
+2. **Hardcore Completionist**  
+   - Desires extensive data on quests, hidden items, and advanced stats.  
+   - More inclined to purchase premium features or expansions.  
 
-The system is designed for scalability, security, and seamless deployment on Vercel, leveraging the App Router architecture for optimal performance and developer experience.
-Key Components
-1. User Interface (UI)
-Description: The primary interaction layer for users, delivering a modern and intuitive experience.
+3. **Streamers / Content Creators**  
+   - Needs an overlay to provide quick references, minimize alt-tabbing.  
+   - Often invests in advanced or brandable (custom themes) overlays.  
 
-Technologies:
-React and NextJS (App Router) for server-side rendering and dynamic routing.
+---
 
-Tailwind CSS for responsive, customizable styling.
+## 4. Core Features & Requirements
 
-Shad Cn for consistent, reusable UI components.
+### 4.1 Tauri-Based Overlay
+- **Always-on-top** and **transparent** window to overlay on full-screen or windowed games.  
+- **Configurable** position, size, and hotkey-based toggle.  
+- **Frameless** approach for a clean, integrated look within games.  
 
-2. Real-time Overlay
-Description: An overlay providing live game data, enhancing gameplay without disruption.
+### 4.2 Game Data Packs
+- **Quest Data:** Step-by-step instructions, prerequisites, rewards, spoiler-level tagging.  
+- **Item Database:** Searchable by name, type, or stats.  
+- **NPC Information:** Location, factions, quest involvement, schedules.  
+- **Maps & Locations:** Interactive or static references for dungeons, open world zones, etc.  
 
-Implementation:
-Web-based Games: Browser extensions or userscripts to inject overlay functionality.
+### 4.3 User Progress & Personalization
+- **Quest Progress**: Users can mark steps completed, “in progress,” or “skipped.”  
+- **Bookmarks**: Quick references for frequently accessed items, quests, or NPCs.  
+- **Custom Overlay Themes**: Basic and premium skins, background opacities, or color schemes.  
+- **Spoiler Controls**: Option to hide or show end-game or major plot spoilers.  
 
-Native Games: Desktop application using Electron for cross-platform overlays.
+### 4.4 Authentication & Purchases
+- **Clerk** for login, logout, and password resets.  
+- **Stripe** for secure purchase flows:
+  - One-time purchase for individual game packs.  
+  - Optional premium add-ons (themes, advanced features).  
+  - Trials or free demos.  
 
-3. Quest Tracking and Progress Monitoring
-Description: Tracks user quest progress and syncs with game states.
+### 4.5 Multi-Platform Support
+- **Windows**: Must support Windows 10+ with minimal system overhead.  
+- **macOS**: Support the latest two versions of macOS.  
+- **Linux**: Main distros (Ubuntu, Fedora), ensuring a functional overlay.  
 
-Implementation: Stores data in PostgreSQL, syncing via game APIs or custom integration methods.
+---
 
-4. Interactive Maps and Location Guides
-Description: Offers interactive maps with markers for key in-game locations.
+## 5. Monetization Strategy
 
-Implementation: Utilizes libraries like Leaflet, customized for game-specific worlds.
+1. **Individual Game Data Packs** (e.g., Elden Ring, Baldur’s Gate 3), sold at \$5.99 each.  
+2. **Premium Add-ons**: Themes, advanced map layers, voice narration, etc., sold at separate price points (\$2.49 – \$3.99).  
+3. **Trial Access**: 7-day trial at \$0.99 for new users to test the product.  
 
-5. Item Database with Search Functionality
-Description: A detailed, searchable database of in-game items.
+See monetization details in:   
 
-Implementation: PostgreSQL tables with full-text search capabilities for efficient querying.
+---
 
-6. User Account and Subscription Management
-Description: Manages user profiles, authentication, and subscription tiers.
+## 6. Technical Requirements
 
-Implementation: Clerk for authentication and user management; Stripe for payment processing.
+### 6.1 Front-End / Overlay
+- **Framework**: React + Next.js for UI.  
+- **Overlay**: Tauri (Rust + TypeScript) for the cross-platform native shell.  
+- **Styling**: Tailwind CSS, Shadcn UI components.  
 
-7. Multi-platform Support
-Description: Ensures accessibility across Windows, macOS, and Linux.
+### 6.2 Backend
+- **Next.js App Router** for API endpoints and server-side rendering.  
+- **PostgreSQL** for persistent storage of user progress, game data, logs.  
+- **Authentication**: Clerk integration (no local user table needed).  
+- **Payment**: Stripe integration with robust error handling, subscription webhooks, etc.  
 
-Implementation: Web app for broad compatibility; optional Electron-based desktop app for native experiences.
+### 6.3 Data Model
+- Game-specific schemas (e.g. `elden_ring` and `baldurs_gate3`) containing tables for:
+  - `quests`, `quest_steps`, `items`, `npcs`, `locations`  
+- A `system` schema for user settings, bookmarks, purchases, etc.  
+- Full-text search fields (TSVector, GIN indexes) for quick item/quest lookups.  
 
-Implementation Details
-Frontend
-Framework: React with NextJS (App Router) for server-side rendering, static generation, and dynamic routes.
+For detailed schema structure:   
 
-Styling: Tailwind CSS for responsive design.
+### 6.4 Security & Privacy
+- **Encrypted Communication**: HTTPS for all backend calls.  
+- **Secure Auth**: Clerk manages tokens, minimal exposure of user data.  
+- **Payment Security**: Rely on Stripe for PCI-compliant transactions.  
+- **Minimal Data Storage**: Only store necessary user progress / settings.  
 
-Components: Shad Cn for rapid development and consistency.
+### 6.5 Performance & Stability
+- **Lightweight Overlay**: Tauri ensures minimal CPU / RAM overhead, essential for gaming performance.  
+- **Caching**: Potential local caching of game data to reduce repeated fetch calls.  
+- **Scalability**: Next.js backend on Vercel, with horizontally scalable PostgreSQL (e.g., managed DB).  
 
-State Management: React hooks; Redux for complex state needs.
+---
 
-Real-time Features: WebSockets for live updates; fallback to polling if needed.
+## 7. User Flow (High-Level)
 
-Backend
-API: NextJS App Router for server-side logic and API endpoints.
+1. **Download & Install**: User downloads the Tauri desktop client from your website.  
+2. **Log In / Sign Up**: Clerk flow inside Tauri for user authentication.  
+3. **Purchase or Unlock Game Pack**: Stripe payment flow if not already owned.  
+4. **Overlay Settings**: Configure size, hotkeys, spoiler visibility, etc.  
+5. **Launch Game**: Overlay remains ready in the background.  
+6. **In-Game Usage**: Toggle overlay, search for quests/items, track progress.  
+7. **Sync & Save**: Changes saved to the DB for multi-device continuity.  
 
-Authentication: Clerk for secure user authentication and management.
+---
 
-Payment Processing: Stripe integration for subscriptions and payments.
+## 8. Success Metrics
 
-Database
-Choice: PostgreSQL
-Reasoning: PostgreSQL is finalized as the database due to its scalability, advanced querying capabilities, and robustness, aligning with FridayAI’s goal of being a top-tier product. It outperforms SQLite for high-traffic, growing applications.
+- **User Engagement**: Daily active users, average session length.  
+- **Conversion Rate**: % of trial users converting to paid.  
+- **Churn Rate**: Frequency of subscription cancellations (if a subscription is introduced).  
+- **Overlay Usage**: Number of in-game interactions, e.g. quest lookups per session.  
+- **Performance Indicators**: CPU/RAM overhead while the overlay is running.  
 
-Schema:
-Users: Account details (managed by Clerk), subscription status.
+---
 
-Games: Quests, items, map data.
 
-Progress: User-specific quest and item tracking.
+## 9 Non-Functional Requirements
 
-Optimization: Indexed queries and caching for read-heavy operations.
+1. **Availability**: 99.9% uptime for the backend to ensure real-time data.  
+2. **Maintainability**: Modular architecture for quick expansions (new games).  
+3. **Usability**: Overlay must remain intuitive, with minimal learning curve.  
+4. **Portability**: Single codebase for Windows, macOS, Linux Tauri builds.  
+5. **Localization** (Future Consideration): Ability to add language packs for non-English users.  
 
-Real-time Overlay
-Web-based Games: Browser extensions injecting JavaScript overlays.
+---
 
-Native Games: Electron app with overlay capabilities, leveraging game APIs or memory reading (if feasible).
+## 10. Risks & Mitigations
 
-Interactive Maps
-Library: Leaflet with custom tiles or overlays.
+- **Resource Intensity**: Overlays can slow the game. Mitigation: Tauri is lightweight; aggressively optimize.  
+- **Licensing & Legal**: Need to confirm fair use of game data. Mitigation: Only include user-created or open-source data, respect developer TOS.  
+- **User Privacy**: Potential store of game logs or personal notes. Mitigation: Store minimal data, follow data protection regulations.  
 
-Features: Zoom, pan, clickable markers with popups.
+---
 
-Data: Stored in PostgreSQL, linked to game-specific locations.
+## 11. Appendices
 
-Item Database
-Schema: Items (name, description, stats, locations).
+- **Monetization & Product IDs**: Detailed SKUs and one-time purchase structures.   
+- **Game Documentation**: Best practices for adding new titles, data pack structure.   
+- **Database Schema**: System schema vs. game schemas, full DDL.   
+- **Technical README**: Overall architecture notes.   
 
-Search: Full-text search or indexed fields for performance.
+---
 
-User Accounts and Subscriptions
-Authentication: Clerk handles secure login, registration, and user management.
-
-Subscriptions: Stripe-managed tiers, synced with Clerk user data for dynamic access.
-
-Challenges and Solutions
-Game Integration
-Challenge: Variability in game architectures and access restrictions.
-
-Solution: Prioritize games with APIs or modding support; provide user setup guides.
-
-Real-time Synchronization
-Challenge: Syncing overlay and quest data with game state.
-
-Solution: Use WebSockets for low-latency updates; optimize data payloads.
-
-Scalability
-Challenge: Supporting a large user base and extensive game data.
-
-Solution: Leverage PostgreSQL’s scalability; implement caching (e.g., Redis); design for concurrency.
-
-Security
-Challenge: Protecting user data and preventing breaches.
-
-Solution: Use HTTPS, Clerk’s secure auth, and regular dependency updates.
-
-User Experience
-Challenge: Ensuring overlays enhance, not hinder, gameplay.
-
-Solution: Optimize resource usage; offer customization options.
-
-Development Workflow
-Version Control: Git (e.g., GitHub) for collaboration and versioning.
-
-Testing:
-Unit tests for components and APIs (Jest, React Testing Library).
-
-Integration tests for end-to-end workflows (including Clerk and Stripe).
-
-User testing for feedback and refinement.
-
-Deployment: Vercel for NextJS hosting (App Router optimized); managed PostgreSQL (e.g., Supabase, AWS RDS).
-
-Suggestions for Enhancement
-To ensure FridayAI is a top-notch product for gamers, consider the following:
-Community Features: Enable user-contributed guides and items; add forums for interaction.
-
-Personalization: Allow customization of overlay appearance and data; offer playstyle-based recommendations.
-
-Analytics: Provide gameplay insights (e.g., quest completion times, stats).
-
-Cross-game Support: Use a modular design to easily onboard new games.
-
-Accessibility: Adhere to WCAG guidelines for inclusivity.
-
-Performance: Implement lazy loading and optimize frontend assets.
-
-Documentation: Create detailed user and developer guides.
-
-Support: Offer responsive customer service via chat or email.
-
-By implementing this updated technical blueprint with NextJS App Router, PostgreSQL, and Clerk, FridayAI will deliver a high-quality, scalable, and user-centric experience for gamers worldwide, optimized for Vercel hosting and robust user management.
+**End of Document**  
