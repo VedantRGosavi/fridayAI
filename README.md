@@ -1,7 +1,7 @@
 # fridayAI
 FridayAI Technical Document
 
-##Overview
+Overview
 
 FridayAI is an interactive gaming assistant designed to elevate the gaming experience by delivering real-time information, quest tracking, and comprehensive game guides for popular titles. It aims to be a top-notch product for gamers, offering a seamless and feature-rich toolset to enhance gameplay across multiple platforms.
 Purpose
@@ -31,6 +31,8 @@ Language: TypeScript
 Authentication: Clerk
 
 Payment Processing: Stripe
+
+Hosting: Vercel
 
 Architecture
 FridayAI employs a client-server architecture optimized for Vercel hosting:
