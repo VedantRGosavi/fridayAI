@@ -1,0 +1,457 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["system", "elden_ring", "baldurs_gate3"]
+}
+
+// System Schema Models
+model Subscription {
+  id                  Int      @id @default(autoincrement())
+  clerkUserId        String   @unique @map("clerk_user_id")
+  stripeSubscriptionId String  @unique @map("stripe_subscription_id")
+  status             String
+  currentPeriodEnd   DateTime @map("current_period_end")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("subscriptions")
+  @@schema("system")
+}
+
+model UserSettings {
+  clerkUserId            String   @id @map("clerk_user_id")
+  overlayPosition        String?  @map("overlay_position")
+  overlaySize           String?  @map("overlay_size")
+  overlayOpacity        Float?   @map("overlay_opacity") @default(0.85)
+  hotkeyCombination     String?  @map("hotkey_combination") @default("ctrl+shift+j")
+  theme                 String?  @default("dark")
+  defaultInfoDisplayMode String?  @map("default_info_display_mode") @default("concise")
+  showSpoilers         Boolean  @default(false) @map("show_spoilers")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("user_settings")
+  @@schema("system")
+}
+
+model UserGameProgress {
+  id           Int      @id @default(autoincrement())
+  clerkUserId  String   @map("clerk_user_id")
+  gameId       String   @map("game_id")
+  questId      String   @map("quest_id")
+  stepId       String?  @map("step_id")
+  completed    Boolean  @default(false)
+  markedStatus String   @default("untracked") @map("marked_status")
+  notes        String?
+  lastAccessed DateTime? @map("last_accessed")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@unique([clerkUserId, gameId, questId], name: "unique_user_game_quest")
+  @@map("user_game_progress")
+  @@schema("system")
+}
+
+model UserBookmark {
+  id            Int      @id @default(autoincrement())
+  clerkUserId   String   @map("clerk_user_id")
+  gameId        String   @map("game_id")
+  resourceType  String   @map("resource_type")
+  resourceId    String   @map("resource_id")
+  displayName   String   @map("display_name")
+  bookmarkGroup String?  @map("bookmark_group") @default("default")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@unique([clerkUserId, gameId, resourceType, resourceId], name: "unique_bookmark")
+  @@map("user_bookmarks")
+  @@schema("system")
+}
+
+model UsageLog {
+  id           Int      @id @default(autoincrement())
+  clerkUserId  String   @map("clerk_user_id")
+  gameId       String   @map("game_id")
+  actionType   String   @map("action_type")
+  resourceType String?  @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  sessionId    String?  @map("session_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("usage_logs")
+  @@schema("system")
+}
+
+model Purchase {
+  id              Int       @id @default(autoincrement())
+  clerkUserId     String    @map("clerk_user_id")
+  gameId          String    @map("game_id")
+  paymentIntentId String?   @unique @map("payment_intent_id")
+  status          String
+  amount          Int
+  createdAt       DateTime  @default(now()) @map("created_at")
+  completedAt     DateTime? @map("completed_at")
+
+  @@map("purchases")
+  @@schema("system")
+}
+
+// Elden Ring Schema Models
+model EldenRingQuest {
+  id                String   @id @map("quest_id")
+  name              String
+  description       String
+  type              String
+  startingLocationId String? @map("starting_location_id")
+  questGiverId      String? @map("quest_giver_id")
+  difficulty        String?
+  isMainStory       Boolean @default(false) @map("is_main_story")
+  rewards           Json?
+  relatedQuests     String[] @map("related_quests")
+  spoilerLevel      Int     @default(0) @map("spoiler_level")
+  versionAdded      String? @map("version_added")
+  lastUpdated       DateTime @default(now()) @map("last_updated")
+  searchVector      Unsupported("tsvector")?
+
+  steps             EldenRingQuestStep[]
+  startingLocation  EldenRingLocation? @relation("QuestStartLocation", fields: [startingLocationId], references: [id])
+  questGiver        EldenRingNPC? @relation("QuestGiver", fields: [questGiverId], references: [id])
+  prerequisites     EldenRingQuestPrerequisite[]
+  consequences      EldenRingQuestConsequence[]
+
+  @@index([searchVector], type: Gin)
+  @@map("quests")
+  @@schema("elden_ring")
+}
+
+model EldenRingQuestStep {
+  id              String   @id @map("step_id")
+  questId         String   @map("quest_id")
+  stepNumber      Int      @map("step_number")
+  title           String
+  description     String
+  objective       String
+  hints           String?
+  locationId      String?  @map("location_id")
+  requiredItems   String[] @map("required_items")
+  requiredNpcs    String[] @map("required_npcs")
+  completionFlags String?  @map("completion_flags")
+  nextStepId      String?  @unique @map("next_step_id")
+  alternativePaths String? @map("alternative_paths")
+  spoilerLevel    Int      @default(0) @map("spoiler_level")
+
+  quest           EldenRingQuest    @relation(fields: [questId], references: [id])
+  location        EldenRingLocation? @relation(fields: [locationId], references: [id])
+  nextStep        EldenRingQuestStep? @relation("StepProgression", fields: [nextStepId], references: [id])
+  previousStep    EldenRingQuestStep? @relation("StepProgression")
+  consequences    EldenRingQuestConsequence[]
+
+  @@map("quest_steps")
+  @@schema("elden_ring")
+}
+
+model EldenRingLocation {
+  id                String   @id @map("location_id")
+  name              String
+  description       String
+  region            String
+  parentLocationId  String?  @map("parent_location_id")
+  coordinates       Json?
+  pointsOfInterest  String[] @map("points_of_interest")
+  connectedLocations String[] @map("connected_locations")
+  difficultyLevel   String?  @map("difficulty_level")
+  recommendedLevel  String?  @map("recommended_level")
+  notableItems      String[] @map("notable_items")
+  notableNpcs       String[] @map("notable_npcs")
+  searchVector      Unsupported("tsvector")?
+
+  parentLocation    EldenRingLocation?  @relation("LocationHierarchy", fields: [parentLocationId], references: [id])
+  childLocations    EldenRingLocation[] @relation("LocationHierarchy")
+  quests           EldenRingQuest[]    @relation("QuestStartLocation")
+  questSteps       EldenRingQuestStep[]
+  npcs             EldenRingNPC[]      @relation("NPCLocation")
+  npcLocations     EldenRingNPCLocation[] @relation("NPCLocationMapping")
+
+  @@index([searchVector], type: Gin)
+  @@map("locations")
+  @@schema("elden_ring")
+}
+
+model EldenRingNPC {
+  id                String   @id @map("npc_id")
+  name              String
+  description       String
+  role              String?
+  defaultLocationId String?  @map("default_location_id")
+  faction           String?
+  isHostile         Boolean  @default(false) @map("is_hostile")
+  isMerchant       Boolean  @default(false) @map("is_merchant")
+  givesQuests      String[] @map("gives_quests")
+  services         String[]
+  dialogueSummary  String?  @map("dialogue_summary")
+  relationshipToOtherNpcs String? @map("relationship_to_other_npcs")
+  schedule         Json?
+  dropsOnDefeat    String[] @map("drops_on_defeat")
+  searchVector     Unsupported("tsvector")?
+
+  defaultLocation  EldenRingLocation? @relation("NPCLocation", fields: [defaultLocationId], references: [id])
+  quests          EldenRingQuest[]   @relation("QuestGiver")
+  npcLocations    EldenRingNPCLocation[] @relation("NPCDetails")
+
+  @@index([searchVector], type: Gin)
+  @@map("npcs")
+  @@schema("elden_ring")
+}
+
+// Baldur's Gate 3 Schema Models
+model BaldursGateQuest {
+  id                String   @id @map("quest_id")
+  name              String
+  description       String
+  type              String
+  startingLocationId String? @map("starting_location_id")
+  questGiverId      String? @map("quest_giver_id")
+  difficulty        String?
+  isMainStory       Boolean @default(false) @map("is_main_story")
+  rewards           Json?
+  relatedQuests     String[] @map("related_quests")
+  spoilerLevel      Int     @default(0) @map("spoiler_level")
+  versionAdded      String? @map("version_added")
+  lastUpdated       DateTime @default(now()) @map("last_updated")
+  searchVector      Unsupported("tsvector")?
+
+  steps             BaldursGateQuestStep[]
+  startingLocation  BaldursGateLocation? @relation("QuestStartLocation", fields: [startingLocationId], references: [id])
+  questGiver        BaldursGateNPC? @relation("QuestGiver", fields: [questGiverId], references: [id])
+  prerequisites     BaldursGateQuestPrerequisite[]
+  consequences      BaldursGateQuestConsequence[]
+
+  @@index([searchVector], type: Gin)
+  @@map("quests")
+  @@schema("baldurs_gate3")
+}
+
+model BaldursGateQuestStep {
+  id              String   @id @map("step_id")
+  questId         String   @map("quest_id")
+  stepNumber      Int      @map("step_number")
+  title           String
+  description     String
+  objective       String
+  hints           String?
+  locationId      String?  @map("location_id")
+  requiredItems   String[] @map("required_items")
+  requiredNpcs    String[] @map("required_npcs")
+  completionFlags String?  @map("completion_flags")
+  nextStepId      String?  @unique @map("next_step_id")
+  alternativePaths String? @map("alternative_paths")
+  spoilerLevel    Int      @default(0) @map("spoiler_level")
+
+  quest           BaldursGateQuest    @relation(fields: [questId], references: [id])
+  location        BaldursGateLocation? @relation(fields: [locationId], references: [id])
+  nextStep        BaldursGateQuestStep? @relation("StepProgression", fields: [nextStepId], references: [id])
+  previousStep    BaldursGateQuestStep? @relation("StepProgression")
+  consequences    BaldursGateQuestConsequence[]
+
+  @@map("quest_steps")
+  @@schema("baldurs_gate3")
+}
+
+model BaldursGateLocation {
+  id                String   @id @map("location_id")
+  name              String
+  description       String
+  region            String
+  parentLocationId  String?  @map("parent_location_id")
+  coordinates       Json?
+  pointsOfInterest  String[] @map("points_of_interest")
+  connectedLocations String[] @map("connected_locations")
+  difficultyLevel   String?  @map("difficulty_level")
+  recommendedLevel  String?  @map("recommended_level")
+  notableItems      String[] @map("notable_items")
+  notableNpcs       String[] @map("notable_npcs")
+  searchVector      Unsupported("tsvector")?
+
+  parentLocation    BaldursGateLocation?  @relation("LocationHierarchy", fields: [parentLocationId], references: [id])
+  childLocations    BaldursGateLocation[] @relation("LocationHierarchy")
+  quests           BaldursGateQuest[]    @relation("QuestStartLocation")
+  questSteps       BaldursGateQuestStep[]
+  npcs             BaldursGateNPC[]      @relation("NPCLocation")
+  npcLocations     BaldursGateNPCLocation[] @relation("NPCLocationMapping")
+
+  @@index([searchVector], type: Gin)
+  @@map("locations")
+  @@schema("baldurs_gate3")
+}
+
+model BaldursGateNPC {
+  id                String   @id @map("npc_id")
+  name              String
+  description       String
+  role              String?
+  defaultLocationId String?  @map("default_location_id")
+  faction           String?
+  isHostile         Boolean  @default(false) @map("is_hostile")
+  isMerchant       Boolean  @default(false) @map("is_merchant")
+  givesQuests      String[] @map("gives_quests")
+  services         String[]
+  dialogueSummary  String?  @map("dialogue_summary")
+  relationshipToOtherNpcs String? @map("relationship_to_other_npcs")
+  schedule         Json?
+  dropsOnDefeat    String[] @map("drops_on_defeat")
+  searchVector     Unsupported("tsvector")?
+
+  defaultLocation  BaldursGateLocation? @relation("NPCLocation", fields: [defaultLocationId], references: [id])
+  quests          BaldursGateQuest[]   @relation("QuestGiver")
+  npcLocations    BaldursGateNPCLocation[] @relation("NPCDetails")
+
+  @@index([searchVector], type: Gin)
+  @@map("npcs")
+  @@schema("baldurs_gate3")
+}
+
+// Additional Elden Ring Models
+model EldenRingItem {
+  id              String   @id @map("item_id")
+  name            String
+  description     String
+  type            String
+  subtype         String?
+  stats           Json?
+  requirements    Json?
+  effects         String?
+  locationsFound  String[] @map("locations_found")
+  droppedBy       String[] @map("dropped_by")
+  questRelated    Boolean  @default(false) @map("quest_related")
+  relatedQuests   String[] @map("related_quests")
+  rarity          String?
+  imagePath       String?  @map("image_path")
+  searchVector    Unsupported("tsvector")?
+
+  @@index([searchVector], type: Gin)
+  @@map("items")
+  @@schema("elden_ring")
+}
+
+model EldenRingNPCLocation {
+  id            Int      @id @default(autoincrement())
+  npcId         String   @map("npc_id")
+  locationId    String   @map("location_id")
+  conditionType String?  @map("condition_type")
+  conditionValue String? @map("condition_value")
+  notes         String?
+
+  npc          EldenRingNPC      @relation("NPCDetails", fields: [npcId], references: [id])
+  location     EldenRingLocation @relation("NPCLocationMapping", fields: [locationId], references: [id])
+
+  @@map("npc_locations")
+  @@schema("elden_ring")
+}
+
+model EldenRingQuestPrerequisite {
+  id               Int      @id @default(autoincrement())
+  questId          String   @map("quest_id")
+  prerequisiteType String   @map("prerequisite_type")
+  prerequisiteId   String   @map("prerequisite_id")
+  notes            String?
+
+  quest           EldenRingQuest @relation(fields: [questId], references: [id])
+
+  @@map("quest_prerequisites")
+  @@schema("elden_ring")
+}
+
+model EldenRingQuestConsequence {
+  id           Int      @id @default(autoincrement())
+  questId      String   @map("quest_id")
+  stepId       String?  @map("step_id")
+  decision     String
+  affectsType  String   @map("affects_type")
+  affectsId    String   @map("affects_id")
+  effect       String
+  spoilerLevel Int      @default(0) @map("spoiler_level")
+
+  quest        EldenRingQuest     @relation(fields: [questId], references: [id])
+  step         EldenRingQuestStep? @relation(fields: [stepId], references: [id])
+
+  @@map("quest_consequences")
+  @@schema("elden_ring")
+}
+
+// Additional Baldur's Gate 3 Models
+model BaldursGateItem {
+  id              String   @id @map("item_id")
+  name            String
+  description     String
+  type            String
+  subtype         String?
+  stats           Json?
+  requirements    Json?
+  effects         String?
+  locationsFound  String[] @map("locations_found")
+  droppedBy       String[] @map("dropped_by")
+  questRelated    Boolean  @default(false) @map("quest_related")
+  relatedQuests   String[] @map("related_quests")
+  rarity          String?
+  imagePath       String?  @map("image_path")
+  searchVector    Unsupported("tsvector")?
+
+  @@index([searchVector], type: Gin)
+  @@map("items")
+  @@schema("baldurs_gate3")
+}
+
+model BaldursGateNPCLocation {
+  id            Int      @id @default(autoincrement())
+  npcId         String   @map("npc_id")
+  locationId    String   @map("location_id")
+  conditionType String?  @map("condition_type")
+  conditionValue String? @map("condition_value")
+  notes         String?
+
+  npc          BaldursGateNPC      @relation("NPCDetails", fields: [npcId], references: [id])
+  location     BaldursGateLocation @relation("NPCLocationMapping", fields: [locationId], references: [id])
+
+  @@map("npc_locations")
+  @@schema("baldurs_gate3")
+}
+
+model BaldursGateQuestPrerequisite {
+  id               Int      @id @default(autoincrement())
+  questId          String   @map("quest_id")
+  prerequisiteType String   @map("prerequisite_type")
+  prerequisiteId   String   @map("prerequisite_id")
+  notes            String?
+
+  quest           BaldursGateQuest @relation(fields: [questId], references: [id])
+
+  @@map("quest_prerequisites")
+  @@schema("baldurs_gate3")
+}
+
+model BaldursGateQuestConsequence {
+  id           Int      @id @default(autoincrement())
+  questId      String   @map("quest_id")
+  stepId       String?  @map("step_id")
+  decision     String
+  affectsType  String   @map("affects_type")
+  affectsId    String   @map("affects_id")
+  effect       String
+  spoilerLevel Int      @default(0) @map("spoiler_level")
+
+  quest        BaldursGateQuest     @relation(fields: [questId], references: [id])
+  step         BaldursGateQuestStep? @relation(fields: [stepId], references: [id])
+
+  @@map("quest_consequences")
+  @@schema("baldurs_gate3")
+}
